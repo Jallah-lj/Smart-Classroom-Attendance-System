@@ -129,6 +129,18 @@ export async function processCheckIn(
     db
   );
 
+  // Broadcast real-time check-in event to active projector listeners
+  try {
+    const { broadcastSessionEvent } = await import('./sessionStreamService.js');
+    broadcastSessionEvent(submission.sessionId, 'attendance-event', {
+      studentId: submission.studentId,
+      status: verification.status,
+      timestamp: recordedAt
+    });
+  } catch (err) {
+    // Ignore SSE broadcast failure in non-server test environments
+  }
+
   // 7. Get course info for calm success screen
   const sessionInfo = await db.query(
     `SELECT c.title, c.code
